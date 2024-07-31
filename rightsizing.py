@@ -48,3 +48,19 @@ def index():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Cluster Visualization</title>
+</head>
+<body>
+    <h1>Cluster Visualization</h1>
+    <iframe src="/dashboard/" width="100%" height="600px" frameborder="0"></iframe>
+</body>
+</html>
+
