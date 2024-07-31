@@ -1,7 +1,31 @@
-sd_CpuCont95_list = [x for x in sd_CpuCont95_list if not np.isnan(x)]
-sd_CpuDemand95_list = [x for x in sd_CpuDemand95_list if not np.isnan(x)]
-sd_MemUsage95_list = [x for x in sd_MemUsage95_list if not np.isnan(x)]
-sd_CpuUsage95_list = [x for x in sd_CpuUsage95_list if not np.isnan(x)]
+import pandas as pd
+
+# Load your data
+df = pd.read_csv('path_to_your_data_file.csv')  # Replace with the actual path to your data file
+
+# Rename the columns based on the provided indices
+df.rename(columns={
+    df.columns[9]: 'CpuUsage95',
+    df.columns[12]: 'CpuDemand95',
+    df.columns[15]: 'CpuContention95',
+    df.columns[18]: 'MemUsage95'
+}, inplace=True)
+
+# Melt the DataFrame to long format
+df_melted = df.melt(id_vars=['Date', 'Cluster'], 
+                    value_vars=['CpuUsage95', 'CpuDemand95', 'CpuContention95', 'MemUsage95'],
+                    var_name='metric', 
+                    value_name='value')
+
+# Save the transformed data to a CSV for use in the Dash app
+df_melted.to_csv('data/transformed_data.csv', index=False)
+
+print("Transformed DataFrame")
+print(df_melted.head())
+
+
+
+#flask app
 
 from flask import Flask, render_template
 import pandas as pd
@@ -20,24 +44,36 @@ df = pd.read_csv('data/data_file.csv')  # Modify to load your actual data
 
 # Example data
 cluster_options = df['cluster'].unique()
+metric_options = ['CpuUsage95', 'CpuDemand95', 'CpuContention95', 'MemUsage95']
 
 # Dash layout
 dash_app.layout = html.Div([
-    dcc.Dropdown(
-        id='cluster-dropdown',
-        options=[{'label': i, 'value': i} for i in cluster_options],
-        value=cluster_options[0]
-    ),
+    html.Div([
+        dcc.Dropdown(
+            id='cluster-dropdown',
+            options=[{'label': i, 'value': i} for i in cluster_options],
+            value=cluster_options[0]
+        )
+    ]),
+    html.Div([
+        dcc.Checklist(
+            id='metric-checklist',
+            options=[{'label': i, 'value': i} for i in metric_options],
+            value=metric_options,
+            inline=True
+        )
+    ]),
     dcc.Graph(id='graph')
 ])
 
 # Dash callback to update graph
 @dash_app.callback(
     Output('graph', 'figure'),
-    [Input('cluster-dropdown', 'value')]
+    [Input('cluster-dropdown', 'value'),
+     Input('metric-checklist', 'value')]
 )
-def update_graph(selected_cluster):
-    filtered_df = df[df['cluster'] == selected_cluster]
+def update_graph(selected_cluster, selected_metrics):
+    filtered_df = df[(df['cluster'] == selected_cluster) & (df['metric'].isin(selected_metrics))]
     fig = px.line(filtered_df, x='date', y='value', color='metric',
                   title='30-day Utilization Chart')
     return fig
@@ -48,32 +84,5 @@ def index():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/style.css">
-    <title>Cluster Visualization</title>
-</head>
-<body>
-    <h1>Cluster Visualization</h1>
-    <iframe src="/dashboard/" width="100%" height="600px" frameborder="0"></iframe>
-</body>
-</html>
-
-body {
-    font-family: Arial, sans-serif;
-}
-
-h1 {
-    text-align: center;
-}
-
-iframe {
-    border: none;
-}
 
 
