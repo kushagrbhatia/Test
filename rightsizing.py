@@ -64,3 +64,16 @@ if __name__ == '__main__':
 </body>
 </html>
 
+body {
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    text-align: center;
+}
+
+iframe {
+    border: none;
+}
+
+
