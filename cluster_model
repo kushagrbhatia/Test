@@ -1,0 +1,55 @@
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+
+# Assuming `cpu_demand` is an array of CPU demands and `data` is your DataFrame
+
+# Step 1: Group clusters to cap the total CPU Demand at 85% for each group
+groups = []
+remaining_indices = list(range(len(cpu_demand)))
+
+while remaining_indices:
+    group_demand_sum = 0
+    group_indices = []
+    
+    for i in remaining_indices:
+        if group_demand_sum + cpu_demand[i] <= 85:
+            group_demand_sum += cpu_demand[i]
+            group_indices.append(i)
+    
+    groups.append(group_indices)
+    remaining_indices = [i for i in remaining_indices if i not in group_indices]
+
+# Step 2: Assign groups to clusters
+group_labels = np.zeros(len(cpu_demand))
+for group_idx, group in enumerate(groups):
+    for idx in group:
+        group_labels[idx] = group_idx
+
+data['Group'] = group_labels
+
+# Step 3: Visualization
+plt.figure(figsize=(14, 10))
+colors = plt.cm.get_cmap('tab10', len(groups))
+
+for group_idx, group in enumerate(groups):
+    group_color = colors(group_idx)
+    plt.scatter(group, cpu_demand[group], color=group_color, label=f'Group {group_idx}', s=100)
+    
+    # Draw a circle around the group
+    for idx in group:
+        plt.gca().add_patch(mpatches.Circle((idx, cpu_demand[idx]), 2, color=group_color, fill=False, lw=2))
+
+plt.xlabel('Cluster Index')
+plt.ylabel('CPU Demand (%)')
+plt.title('Groups of Clusters with Capped Total CPU Demand at 85%')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Step 4: Calculate the number of clusters saved
+initial_num_clusters = len(cpu_demand)
+num_groups_created = len(groups)
+num_clusters_saved = initial_num_clusters - num_groups_created
+
+print(f'Number of clusters saved: {num_clusters_saved}')
