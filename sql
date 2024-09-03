@@ -26,3 +26,22 @@ JOIN
 WHERE 
     m1.rn_asc = 1 
     AND m2.rn_desc = 1;
+
+
+
+SELECT 
+    batch_region,
+    batch_severity,
+    COUNT(*) AS severity_count
+FROM 
+    your_table_name
+GROUP BY 
+    batch_region, 
+    batch_severity
+ORDER BY 
+    batch_region,
+    CASE 
+        WHEN batch_severity = 'high' THEN 1
+        WHEN batch_severity = 'medium' THEN 2
+        WHEN batch_severity = 'low' THEN 3
+    END;
