@@ -47,3 +47,45 @@ ORDER BY
     END;
 
 (TO_TIMESTAMP(avg_end_time, 'YYYY-MM-DD HH24:MI:SS') - TO_TIMESTAMP(avg_start_time, 'YYYY-MM-DD HH24:MI:SS')) * 24 * 60 AS total_time_minutes
+
+SELECT 
+    'Alert_check_Y' AS label, COUNT(*) AS count
+FROM 
+    your_table_name
+WHERE 
+    Alert_check = 'Y'
+UNION ALL
+SELECT 
+    'Alert_check_N' AS label, COUNT(*) AS count
+FROM 
+    your_table_name
+WHERE 
+    Alert_check = 'N'
+UNION ALL
+SELECT 
+    'report_enabled_Y' AS label, COUNT(*) AS count
+FROM 
+    your_table_name
+WHERE 
+    report_enabled = 'Y'
+UNION ALL
+SELECT 
+    'report_enabled_N' AS label, COUNT(*) AS count
+FROM 
+    your_table_name
+WHERE 
+    report_enabled = 'N'
+UNION ALL
+SELECT 
+    'summary_enabled_Y' AS label, COUNT(*) AS count
+FROM 
+    your_table_name
+WHERE 
+    summary_enabled = 'Y'
+UNION ALL
+SELECT 
+    'summary_enabled_N' AS label, COUNT(*) AS count
+FROM 
+    your_table_name
+WHERE 
+    summary_enabled = 'N';
