@@ -1,9 +1,9 @@
 SELECT 
-    TO_CHAR(TO_DATE(alert_time, 'HH24:MI:SS'), 'HH24') AS alert_hour,
-    COUNT(*) AS alert_count
+    Job_instance,
+    fail_count
 FROM 
     your_table_name
-GROUP BY 
-    TO_CHAR(TO_DATE(alert_time, 'HH24:MI:SS'), 'HH24')
+WHERE 
+    alert_date BETWEEN TO_DATE('2023-10-01', 'YYYY-MM-DD') AND TO_DATE('2023-10-31', 'YYYY-MM-DD')
 ORDER BY 
-    alert_hour;
+    fail_count DESC;
