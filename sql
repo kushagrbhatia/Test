@@ -45,3 +45,5 @@ ORDER BY
         WHEN batch_severity = 'medium' THEN 2
         WHEN batch_severity = 'low' THEN 3
     END;
+
+(TO_TIMESTAMP(avg_end_time, 'YYYY-MM-DD HH24:MI:SS') - TO_TIMESTAMP(avg_start_time, 'YYYY-MM-DD HH24:MI:SS')) * 24 * 60 AS total_time_minutes
