@@ -1,0 +1,97 @@
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Variables to be clustered
+vars = ['CpuUsageP95', 'CpuDemandP95', 'MemUsageP95']
+
+for var in vars:
+    # Reshape data for clustering
+    data = filtered_df[var].values.reshape(-1, 1)
+    inertia = []
+
+    # Calculate inertia for different k values
+    K_range = range(1, 11)
+    for k in K_range:
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        kmeans.fit(data)
+        inertia.append(kmeans.inertia_)  # Store inertia for each k
+
+    # Plot the elbow curve
+    plt.figure(figsize=(8, 6))
+    plt.plot(K_range, inertia, 'bo-', markersize=8)
+    plt.title(f'Elbow Method for {var}')
+    plt.xlabel('Number of clusters (k)')
+    plt.ylabel('Inertia')
+    plt.show()
+
+    # Select the optimal k (you can manually inspect the elbow plot to determine this)
+    optimal_k = 3  # Choose the best k after viewing the plot (this is an example)
+    kmeans_optimal = KMeans(n_clusters=optimal_k, random_state=42)
+    filtered_df[f'{var}_Cluster'] = kmeans_optimal.fit_predict(data)
+    
+    # Print centroids
+    print(f"Centroids for {var}:")
+    print(kmeans_optimal.cluster_centers_)
+    
+    # Plot clustering results
+    plt.figure(figsize=(8, 6))
+    plt.scatter(np.arange(len(filtered_df)), filtered_df[var], 
+                c=filtered_df[f'{var}_Cluster'], cmap='viridis')
+    plt.title(f"K Means Clustering for {var} (Optimal k = {optimal_k})")
+    plt.xlabel(var)
+    plt.ylabel("Cluster Assignment")
+    plt.colorbar(label='Cluster')
+    plt.show()
+
+
+___________
+
+
+
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Variables to be clustered
+vars = ['CpuUsageP95', 'CpuDemandP95', 'MemUsageP95']
+
+for var in vars:
+    # Reshape data for clustering
+    data = filtered_df[var].values.reshape(-1, 1)
+    silhouette_scores = []
+
+    # Calculate silhouette scores for different k values
+    K_range = range(2, 11)  # Silhouette is not defined for k=1
+    for k in K_range:
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        cluster_labels = kmeans.fit_predict(data)
+        score = silhouette_score(data, cluster_labels)
+        silhouette_scores.append(score)
+
+    # Plot silhouette scores
+    plt.figure(figsize=(8, 6))
+    plt.plot(K_range, silhouette_scores, 'bo-', markersize=8)
+    plt.title(f'Silhouette Method for {var}')
+    plt.xlabel('Number of clusters (k)')
+    plt.ylabel('Silhouette Score')
+    plt.show()
+
+    # Select the optimal k (this can be determined from the silhouette plot)
+    optimal_k = 3  # Choose the best k after viewing the plot (example)
+    kmeans_optimal = KMeans(n_clusters=optimal_k, random_state=42)
+    filtered_df[f'{var}_Cluster'] = kmeans_optimal.fit_predict(data)
+
+    # Print centroids
+    print(f"Centroids for {var}:")
+    print(kmeans_optimal.cluster_centers_)
+    
+    # Plot clustering results
+    plt.figure(figsize=(8, 6))
+    plt.scatter(np.arange(len(filtered_df)), filtered_df[var], 
+                c=filtered_df[f'{var}_Cluster'], cmap='viridis')
+    plt.title(f"K Means Clustering for {var} (Optimal k = {optimal_k})")
+    plt.xlabel(var)
+    plt.ylabel("Cluster Assignment")
+    plt.colorbar(label='Cluster')
+    plt.show()
