@@ -1,97 +1,67 @@
-from sklearn.cluster import KMeans
+import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
+import statsmodels.api as sm
 
-# Variables to be clustered
-vars = ['CpuUsageP95', 'CpuDemandP95', 'MemUsageP95']
+# Step 1: Prepare Your Data
+# Assuming 'filtered_df' is your DataFrame with a time series index
+# And 'CpuUsageP95', 'CpuDemandP95', 'MemUsageP95' are your columns
 
-for var in vars:
-    # Reshape data for clustering
-    data = filtered_df[var].values.reshape(-1, 1)
-    inertia = []
+# Ensure the index is a datetime index
+filtered_df['timestamp'] = pd.to_datetime(filtered_df['timestamp'])  # Replace 'timestamp' with your actual time column
+filtered_df.set_index('timestamp', inplace=True)
 
-    # Calculate inertia for different k values
-    K_range = range(1, 11)
-    for k in K_range:
-        kmeans = KMeans(n_clusters=k, random_state=42)
-        kmeans.fit(data)
-        inertia.append(kmeans.inertia_)  # Store inertia for each k
+# Visualize the data
+plt.figure(figsize=(10, 6))
+plt.plot(filtered_df['CpuUsageP95'], label='CpuUsageP95')
+plt.title('CPU Usage Over Time')
+plt.xlabel('Time')
+plt.ylabel('CPU Usage')
+plt.legend()
+plt.show()
 
-    # Plot the elbow curve
-    plt.figure(figsize=(8, 6))
-    plt.plot(K_range, inertia, 'bo-', markersize=8)
-    plt.title(f'Elbow Method for {var}')
-    plt.xlabel('Number of clusters (k)')
-    plt.ylabel('Inertia')
-    plt.show()
+# Step 2: Fit a SARIMA Model
 
-    # Select the optimal k (you can manually inspect the elbow plot to determine this)
-    optimal_k = 3  # Choose the best k after viewing the plot (this is an example)
-    kmeans_optimal = KMeans(n_clusters=optimal_k, random_state=42)
-    filtered_df[f'{var}_Cluster'] = kmeans_optimal.fit_predict(data)
-    
-    # Print centroids
-    print(f"Centroids for {var}:")
-    print(kmeans_optimal.cluster_centers_)
-    
-    # Plot clustering results
-    plt.figure(figsize=(8, 6))
-    plt.scatter(np.arange(len(filtered_df)), filtered_df[var], 
-                c=filtered_df[f'{var}_Cluster'], cmap='viridis')
-    plt.title(f"K Means Clustering for {var} (Optimal k = {optimal_k})")
-    plt.xlabel(var)
-    plt.ylabel("Cluster Assignment")
-    plt.colorbar(label='Cluster')
-    plt.show()
+# Define the SARIMA model parameters
+p, d, q = 1, 1, 1  # Non-seasonal ARIMA parameters
+P, D, Q, s = 1, 1, 1, 7  # Seasonal ARIMA parameters (assuming weekly seasonality)
 
+# Fit the SARIMA model
+sarima_model = sm.tsa.statespace.SARIMAX(filtered_df['CpuUsageP95'],
+                                         order=(p, d, q),
+                                         seasonal_order=(P, D, Q, s),
+                                         enforce_stationarity=False,
+                                         enforce_invertibility=False)
+sarima_result = sarima_model.fit()
 
-___________
+# Step 3: Model Summary and Diagnostics
+# Print the summary of the SARIMA model
+print(sarima_result.summary())
 
+# Plot diagnostics to check the residuals
+sarima_result.plot_diagnostics(figsize=(15, 12))
+plt.show()
 
+# Step 4: Forecasting
+# Forecast the next 30 time periods (you can adjust this as needed)
+forecast_steps = 30
+forecast = sarima_result.get_forecast(steps=forecast_steps)
 
-from sklearn.metrics import silhouette_score
-import matplotlib.pyplot as plt
-import numpy as np
+# Get the confidence intervals of the forecast
+forecast_ci = forecast.conf_int()
 
-# Variables to be clustered
-vars = ['CpuUsageP95', 'CpuDemandP95', 'MemUsageP95']
+# Plot the forecast
+plt.figure(figsize=(10, 6))
+plt.plot(filtered_df['CpuUsageP95'], label='Observed')
+plt.plot(forecast.predicted_mean, label='Forecast')
+plt.fill_between(forecast_ci.index,
+                 forecast_ci.iloc[:, 0],
+                 forecast_ci.iloc[:, 1], color='k', alpha=0.2)
+plt.title('SARIMA Forecast of CPU Usage')
+plt.xlabel('Time')
+plt.ylabel('CPU Usage')
+plt.legend()
+plt.show()
 
-for var in vars:
-    # Reshape data for clustering
-    data = filtered_df[var].values.reshape(-1, 1)
-    silhouette_scores = []
-
-    # Calculate silhouette scores for different k values
-    K_range = range(2, 11)  # Silhouette is not defined for k=1
-    for k in K_range:
-        kmeans = KMeans(n_clusters=k, random_state=42)
-        cluster_labels = kmeans.fit_predict(data)
-        score = silhouette_score(data, cluster_labels)
-        silhouette_scores.append(score)
-
-    # Plot silhouette scores
-    plt.figure(figsize=(8, 6))
-    plt.plot(K_range, silhouette_scores, 'bo-', markersize=8)
-    plt.title(f'Silhouette Method for {var}')
-    plt.xlabel('Number of clusters (k)')
-    plt.ylabel('Silhouette Score')
-    plt.show()
-
-    # Select the optimal k (this can be determined from the silhouette plot)
-    optimal_k = 3  # Choose the best k after viewing the plot (example)
-    kmeans_optimal = KMeans(n_clusters=optimal_k, random_state=42)
-    filtered_df[f'{var}_Cluster'] = kmeans_optimal.fit_predict(data)
-
-    # Print centroids
-    print(f"Centroids for {var}:")
-    print(kmeans_optimal.cluster_centers_)
-    
-    # Plot clustering results
-    plt.figure(figsize=(8, 6))
-    plt.scatter(np.arange(len(filtered_df)), filtered_df[var], 
-                c=filtered_df[f'{var}_Cluster'], cmap='viridis')
-    plt.title(f"K Means Clustering for {var} (Optimal k = {optimal_k})")
-    plt.xlabel(var)
-    plt.ylabel("Cluster Assignment")
-    plt.colorbar(label='Cluster')
-    plt.show()
+# Step 5: AIC and BIC for Model Evaluation
+# Print AIC and BIC values to evaluate the model fit
+print(f"AIC: {sarima_result.aic}, BIC: {sarima_result.bic}")
