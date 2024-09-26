@@ -2,23 +2,34 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import OneHotEncoder
 import numpy as np
 
 # Sample Data (replace this with your actual DataFrame)
 data = {
     'cluster_type': ['type1', 'type2', 'type3', 'type1', 'type2', 'type3', 'type1', 'type2', 'type3', 'type1', 'type2'],
-    'runningvms': [10, 20, 30, 15, 25, 35, 12, 22, 32, 18, 28],
-    'hosts': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2]  # This is a placeholder for your hosts data
+    'runningvms': [10, 20, 30, np.nan, 25, np.nan, 12, 22, 32, 18, 28],
+    'hosts': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2]  # Placeholder for your hosts data
 }
 
 # Create a DataFrame
 df = pd.DataFrame(data)
 
-# Prepare the data for clustering (using runningvms and hosts)
-X = df[['runningvms', 'hosts']]
+# Handle NaN values in 'runningvms' (Fill with the mean of 'runningvms')
+df['runningvms'].fillna(df['runningvms'].mean(), inplace=True)
+
+# One-hot encode 'cluster_type'
+encoder = OneHotEncoder(sparse=False)
+cluster_type_encoded = encoder.fit_transform(df[['cluster_type']])
+
+# Create a new DataFrame for the encoded cluster types
+cluster_type_df = pd.DataFrame(cluster_type_encoded, columns=encoder.get_feature_names_out(['cluster_type']))
+
+# Combine the encoded 'cluster_type' with 'runningvms' and 'hosts'
+X = pd.concat([df[['runningvms', 'hosts']], cluster_type_df], axis=1)
 
 # Apply KMeans clustering
-kmeans = KMeans(n_clusters=3, random_state=0)  # Adjust n_clusters based on your needs
+kmeans = KMeans(n_clusters=3, random_state=0)
 df['cluster'] = kmeans.fit_predict(X)
 
 # Visualize the clustering result
@@ -26,7 +37,7 @@ plt.figure(figsize=(10, 6))
 sns.scatterplot(data=df, x='runningvms', y='hosts', hue='cluster', palette='tab10', s=100)
 
 # Add plot title and labels
-plt.title('Clustering of Hosts and Running VMs by Cluster Type')
+plt.title('Clustering of Hosts and Running VMs with Cluster Type Consideration')
 plt.xlabel('Running VMs')
 plt.ylabel('Hosts')
 
