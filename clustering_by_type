@@ -1,15 +1,12 @@
-# One-hot encode 'cluster_type'
-encoder = OneHotEncoder(sparse_output=False)
-cluster_type_encoded = encoder.fit_transform(df_crh[['cluster_type']])
+g = sns.FacetGrid(df_crh, col='cluster_type', col_wrap=3, height=4)
 
-# Check the shape of the encoded data
-print(cluster_type_encoded.shape)  # This will help ensure that the encoding is producing the right shape
+# Map the scatter plot to the grid
+g.map(sns.scatterplot, 'RunningVMs', 'Hosts', hue='cluster', palette='tab10', s=100)
 
-# Create a new DataFrame for the encoded cluster types
-cluster_type_df = pd.DataFrame(cluster_type_encoded, columns=encoder.get_feature_names_out(['cluster_type']))
+# Add titles and labels
+g.add_legend()
+g.set_axis_labels('Running VMs', 'Hosts')
+g.set_titles(col_template='Cluster Type: {col_name}')
 
-# Combine the encoded 'cluster_type' with 'RunningVMs' and 'hosts'
-X = pd.concat([df_crh[['RunningVMs', 'hosts']], cluster_type_df], axis=1)
-
-# Check the shape of X to ensure everything is combined correctly
-print(X.shape)
+# Display the plots
+plt.show()
