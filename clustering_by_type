@@ -1,56 +1,24 @@
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+import pandas as pd
+import seaborn as sns
+import numpy as np
 
-# 1. Load your dataset (replace with actual dataset location)
-df = pd.read_csv("your_data.csv")
+# Sample Data (replace this with your actual DataFrame)
+data = {
+    'cluster_type': ['type1', 'type1', 'type1', 'type2', 'type2', 'type2', 'type3', 'type3', 'type3', 'type3', 'type3'],
+    'runningvms': [10, 15, 20, 25, 30, 18, 5, 12, 35, 28, 22]
+}
 
-# 2. Convert 'ClusterType' to numerical labels using LabelEncoder
-label_encoder = LabelEncoder()
-cluster_type_encoded = label_encoder.fit_transform(df['ClusterType'])
+# Create a DataFrame
+df = pd.DataFrame(data)
 
-# 3. Scale 'RunningVMs'
-scaler = StandardScaler()
-running_vms_scaled = scaler.fit_transform(df[['RunningVMs']])
+# Assign a constant y-value (e.g., y=1 for all points)
+df['y_value'] = 1
 
-# 4. Combine the scaled 'RunningVMs' and the encoded 'ClusterType'
-X = np.column_stack((cluster_type_encoded, running_vms_scaled))
+# Add a jitter effect to the y-values to avoid overlap (small random noise)
+df['y_value'] = df['y_value'] + np.random.uniform(-0.1, 0.1, size=len(df))
 
-# 5. Apply K-means clustering (adjust number of clusters as needed)
-optimal_clusters = 3  # Adjust this based on your need
-kmeans = KMeans(n_clusters=optimal_clusters, random_state=42)
-
-# Save the cluster labels as a list
-cluster_labels = kmeans.fit_predict(X).tolist()  # Cluster labels as list
-
-# Optionally, add the cluster labels to the dataframe for further use
-df['Cluster'] = cluster_labels
-
-# 6. Calculate Centroids
-centroids = kmeans.cluster_centers_
-
-# 7. Plot the Clusters by ClusterType with color coding
+# Create scatter plot
 plt.figure(figsize=(10, 6))
 
-# Scatter plot: color by ClusterType
-scatter = plt.scatter(df['RunningVMs'], df['ClusterType'], c=cluster_type_encoded, cmap='viridis', marker='o')
-
-# Plot the centroids
-for i, centroid in enumerate(centroids):
-    plt.scatter(centroid[1], centroid[0], color='red', marker='x', s=200, label=f'Centroid {i+1}')
-
-# Labeling
-plt.title('Clusters Grouped by ClusterType with Centroids')
-plt.xlabel('Number of Running VMs')
-plt.ylabel('ClusterType (Encoded)')
-plt.colorbar(scatter, label='ClusterType')
-
-# Show the legend for centroids
-plt.legend()
-
-plt.show()
-
-# Print cluster_labels list to verify
-print(cluster_labels)
+# Color-coded scatter plot with each cluster type having its own
