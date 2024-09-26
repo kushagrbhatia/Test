@@ -18,31 +18,9 @@ running_vms_scaled = scaler.fit_transform(df[['RunningVMs']])
 # 4. Combine the scaled 'RunningVMs' and the encoded 'ClusterType'
 X = np.column_stack((cluster_type_encoded, running_vms_scaled))
 
-# 5. Apply K-means clustering (adjust number of clusters as needed)
+# 5. Apply K-means clustering and save labels as a list
 optimal_clusters = 3  # Adjust this based on your need
-kmeans = KMeans(n_clusters=optimal_clusters, random_state=42)
-df['Cluster'] = kmeans.fit_predict(X)
+cluster_labels = kmeans.fit_predict(X).tolist()  # Save cluster labels as a list
 
-# 6. Calculate Centroids
-centroids = kmeans.cluster_centers_
-
-# 7. Plot the Clusters by ClusterType with color coding
-plt.figure(figsize=(10, 6))
-
-# Scatter plot: color by ClusterType
-scatter = plt.scatter(df['RunningVMs'], df['ClusterType'], c=cluster_type_encoded, cmap='viridis', marker='o')
-
-# Plot the centroids
-for i, centroid in enumerate(centroids):
-    plt.scatter(centroid[1], centroid[0], color='red', marker='x', s=200, label=f'Centroid {i+1}')
-
-# Labeling
-plt.title('Clusters Grouped by ClusterType with Centroids')
-plt.xlabel('Number of Running VMs')
-plt.ylabel('ClusterType (Encoded)')
-plt.colorbar(scatter, label='ClusterType')
-
-# Show the legend for centroids
-plt.legend()
-
-plt.show()
+# Print cluster labels
+print(cluster_labels)
