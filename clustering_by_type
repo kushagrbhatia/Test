@@ -1,45 +1,15 @@
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import OneHotEncoder
-import numpy as np
-
-# Sample Data (replace this with your actual DataFrame)
-data = {
-    'cluster_type': ['type1', 'type2', 'type3', 'type1', 'type2', 'type3', 'type1', 'type2', 'type3', 'type1', 'type2'],
-    'runningvms': [10, 20, 30, np.nan, 25, np.nan, 12, 22, 32, 18, 28],
-    'hosts': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2]  # Placeholder for your hosts data
-}
-
-# Create a DataFrame
-df = pd.DataFrame(data)
-
-# Handle NaN values in 'runningvms' (Fill with the mean of 'runningvms')
-df['runningvms'].fillna(df['runningvms'].mean(), inplace=True)
-
 # One-hot encode 'cluster_type'
-encoder = OneHotEncoder(sparse=False)
-cluster_type_encoded = encoder.fit_transform(df[['cluster_type']])
+encoder = OneHotEncoder(sparse_output=False)
+cluster_type_encoded = encoder.fit_transform(df_crh[['cluster_type']])
+
+# Check the shape of the encoded data
+print(cluster_type_encoded.shape)  # This will help ensure that the encoding is producing the right shape
 
 # Create a new DataFrame for the encoded cluster types
 cluster_type_df = pd.DataFrame(cluster_type_encoded, columns=encoder.get_feature_names_out(['cluster_type']))
 
-# Combine the encoded 'cluster_type' with 'runningvms' and 'hosts'
-X = pd.concat([df[['runningvms', 'hosts']], cluster_type_df], axis=1)
+# Combine the encoded 'cluster_type' with 'RunningVMs' and 'hosts'
+X = pd.concat([df_crh[['RunningVMs', 'hosts']], cluster_type_df], axis=1)
 
-# Apply KMeans clustering
-kmeans = KMeans(n_clusters=3, random_state=0)
-df['cluster'] = kmeans.fit_predict(X)
-
-# Visualize the clustering result
-plt.figure(figsize=(10, 6))
-sns.scatterplot(data=df, x='runningvms', y='hosts', hue='cluster', palette='tab10', s=100)
-
-# Add plot title and labels
-plt.title('Clustering of Hosts and Running VMs with Cluster Type Consideration')
-plt.xlabel('Running VMs')
-plt.ylabel('Hosts')
-
-# Display the plot
-plt.show()
+# Check the shape of X to ensure everything is combined correctly
+print(X.shape)
