@@ -17,3 +17,9 @@ plt.show()
 print(df_crh['cluster'].dtype)  #
 
 df_crh['cluster'] = df_crh['cluster'].astype('category')
+
+# Define a color palette with distinct colors for each cluster
+palette = sns.color_palette("tab10", n_colors=11)  # Create a color palette with 11 colors for clusters
+
+# Create a FacetGrid to visualize each cluster type in its own graph
+g = sns.FacetGrid(df_crh, col='cluster_type', col_wrap=3
