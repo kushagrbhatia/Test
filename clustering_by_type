@@ -1,24 +1,24 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import numpy as np
 
 # Sample Data (replace this with your actual DataFrame)
 data = {
-    'cluster_type': ['type1', 'type1', 'type1', 'type2', 'type2', 'type2', 'type3', 'type3', 'type3', 'type3', 'type3'],
-    'runningvms': [10, 15, 20, 25, 30, 18, 5, 12, 35, 28, 22]
+    'cluster_type': ['type1', 'type2', 'type3', 'type1', 'type2', 'type3', 'type1', 'type2', 'type3', 'type1', 'type2'],
+    'runningvms': [10, 20, 30, 15, 25, 35, 12, 22, 32, 18, 28]
 }
 
 # Create a DataFrame
 df = pd.DataFrame(data)
 
-# Assign a constant y-value (e.g., y=1 for all points)
-df['y_value'] = 1
-
-# Add a jitter effect to the y-values to avoid overlap (small random noise)
-df['y_value'] = df['y_value'] + np.random.uniform(-0.1, 0.1, size=len(df))
-
-# Create scatter plot
+# Create a violin plot (mouse and whiskey plot)
 plt.figure(figsize=(10, 6))
+sns.violinplot(x='cluster_type', y='runningvms', data=df, palette='tab10')
 
-# Color-coded scatter plot with each cluster type having its own
+# Add plot title and labels
+plt.title('Mouse and Whiskey Plot: Cluster Type vs Running VMs')
+plt.xlabel('Cluster Type')
+plt.ylabel('Running VMs')
+
+# Display the plot
+plt.show()
