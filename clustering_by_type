@@ -1,25 +1,19 @@
-print(df_crh.head())  # Check if 'cluster' exists and is correct
+# Ensure 'cluster_type' is of category type for easy mapping
+df_crh['cluster_type'] = df_crh['cluster_type'].astype('category')
+
+# Create a custom palette that assigns one color per cluster type
+palette = sns.color_palette("tab10", n_colors=df_crh['cluster_type'].nunique())
 
 # Create a FacetGrid to visualize each cluster type in its own graph
-g = sns.FacetGrid(df_crh, col='cluster_type', col_wrap=3, height=4)
+g = sns.FacetGrid(df_crh, col='cluster_type', col_wrap=3, height=4, palette=palette)
 
-# Use map_dataframe to map scatterplot to the grid
-g.map_dataframe(sns.scatterplot, x='RunningVMs', y='Hosts', hue='cluster', palette='tab10', s=100)
+# Map the scatter plot to the grid, color coding by cluster type
+g.map_dataframe(sns.scatterplot, 'RunningVMs', 'Hosts', hue='cluster_type', palette=palette, s=100)
 
-# Add titles, labels, and legend
+# Add titles and labels
 g.add_legend()
 g.set_axis_labels('Running VMs', 'Hosts')
 g.set_titles(col_template='Cluster Type: {col_name}')
 
 # Display the plot
 plt.show()
-
-print(df_crh['cluster'].dtype)  #
-
-df_crh['cluster'] = df_crh['cluster'].astype('category')
-
-# Define a color palette with distinct colors for each cluster
-palette = sns.color_palette("tab10", n_colors=11)  # Create a color palette with 11 colors for clusters
-
-# Create a FacetGrid to visualize each cluster type in its own graph
-g = sns.FacetGrid(df_crh, col='cluster_type', col_wrap=3
