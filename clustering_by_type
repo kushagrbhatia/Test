@@ -1,3 +1,12 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+
+# 1. Load your dataset (replace with actual dataset location)
+df = pd.read_csv("your_data.csv")
+
 # 2. Convert 'ClusterType' to numerical labels using LabelEncoder
 label_encoder = LabelEncoder()
 cluster_type_encoded = label_encoder.fit_transform(df['ClusterType'])
@@ -17,21 +26,21 @@ df['Cluster'] = kmeans.fit_predict(X)
 # 6. Calculate Centroids
 centroids = kmeans.cluster_centers_
 
-# 7. Plot Clusters and their Centroids
+# 7. Plot the Clusters by ClusterType with color coding
 plt.figure(figsize=(10, 6))
 
-# Scatter plot: color by cluster labels
-scatter = plt.scatter(df['RunningVMs'], df['ClusterType'], c=df['Cluster'], cmap='viridis', marker='o')
+# Scatter plot: color by ClusterType
+scatter = plt.scatter(df['RunningVMs'], df['ClusterType'], c=cluster_type_encoded, cmap='viridis', marker='o')
 
 # Plot the centroids
 for i, centroid in enumerate(centroids):
     plt.scatter(centroid[1], centroid[0], color='red', marker='x', s=200, label=f'Centroid {i+1}')
 
 # Labeling
-plt.title(f'K-Means Clustering (k={optimal_clusters}) with Centroids')
-plt.xlabel('RunningVMs')
+plt.title('Clusters Grouped by ClusterType with Centroids')
+plt.xlabel('Number of Running VMs')
 plt.ylabel('ClusterType (Encoded)')
-plt.colorbar(scatter, label='Cluster')
+plt.colorbar(scatter, label='ClusterType')
 
 # Show the legend for centroids
 plt.legend()
