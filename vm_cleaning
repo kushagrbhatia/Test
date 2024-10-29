@@ -1,28 +1,35 @@
 import pandas as pd
 
-# Sample data for demonstration; replace this with your actual dataset
 # Assuming df is already loaded with the appropriate columns
-# Filter for the specified cluster
-cluster_df = df[df['Cluster'] == 'APCCNXDSIPVMA']
+# Standardize 'Cluster' column to ensure consistency
+df['Cluster'] = df['Cluster'].str.strip().str.upper()
 
-# Perform calculations based on the filtered data
-results = {
-    "Avg_CPU_per_VM": (cluster_df['CpuUsageP95'] / cluster_df['RunningVMs']).mean(),
-    "Average_vCPU_Usage": cluster_df['CpuUsageP95'].mean(),
-    "CPU_Usage_Per_vCPU": (cluster_df['CpuUsageP95'] / cluster_df['vCPUProvisioned']).mean(),
-    "Demand_per_CPU": (cluster_df['CpuDemandP95'] / cluster_df['PhysicalCores']).mean(),
-    "Remaining_Usage_85": (85 - cluster_df['CpuUsageP95']).mean(),
-    "Effective_Avg_CPU_per_VM": (cluster_df['CpuUsageP95'] / cluster_df['RunningVMs']).mean() * (cluster_df['vCPUProvisioned'] / cluster_df['PhysicalCores']).mean(),
-    "Right_Size_vCPU_Delta": (cluster_df['vCPUProvisioned'] - cluster_df['CpuDemandP95']).mean(),
-    "Available_vCPU": (cluster_df['vCPUProvisioned'] - cluster_df['RunningVMs']).mean(),
-    "Recommended_Max_vCPU_on_Usage": (85 / cluster_df['CpuUsageP95']).mean() * cluster_df['vCPUProvisioned'].mean(),
-    "Max_VM_on_Usage": (85 / cluster_df['CpuUsageP95']).mean() * cluster_df['RunningVMs'].mean(),
-    "vCPU_Usage_P95": cluster_df['CpuUsageP95'].mean(),
-    "MemUsageP95": cluster_df['MemUsageP95'].mean()
-}
+# Filter for the specified cluster, standardizing the cluster name as well
+cluster_name = 'APCCNXDSIPVMA'
+cluster_df = df[df['Cluster'] == cluster_name]
 
-# Convert the results into a DataFrame for better display
-results_df = pd.DataFrame([results])
+# Check if cluster_df is still empty
+if cluster_df.empty:
+    print(f"No data found for the cluster: {cluster_name}")
+else:
+    # Perform calculations based on the filtered data
+    results = {
+        "Avg_CPU_per_VM": (cluster_df['CpuUsageP95'] / cluster_df['RunningVMs']).mean(),
+        "Average_vCPU_Usage": cluster_df['CpuUsageP95'].mean(),
+        "CPU_Usage_Per_vCPU": (cluster_df['CpuUsageP95'] / cluster_df['vCPUProvisioned']).mean(),
+        "Demand_per_CPU": (cluster_df['CpuDemandP95'] / cluster_df['PhysicalCores']).mean(),
+        "Remaining_Usage_85": (85 - cluster_df['CpuUsageP95']).mean(),
+        "Effective_Avg_CPU_per_VM": (cluster_df['CpuUsageP95'] / cluster_df['RunningVMs']).mean() * (cluster_df['vCPUProvisioned'] / cluster_df['PhysicalCores']).mean(),
+        "Right_Size_vCPU_Delta": (cluster_df['vCPUProvisioned'] - cluster_df['CpuDemandP95']).mean(),
+        "Available_vCPU": (cluster_df['vCPUProvisioned'] - cluster_df['RunningVMs']).mean(),
+        "Recommended_Max_vCPU_on_Usage": (85 / cluster_df['CpuUsageP95']).mean() * cluster_df['vCPUProvisioned'].mean(),
+        "Max_VM_on_Usage": (85 / cluster_df['CpuUsageP95']).mean() * cluster_df['RunningVMs'].mean(),
+        "vCPU_Usage_P95": cluster_df['CpuUsageP95'].mean(),
+        "MemUsageP95": cluster_df['MemUsageP95'].mean()
+    }
 
-# Display the table
-print(results_df)
+    # Convert the results into a DataFrame for better display
+    results_df = pd.DataFrame([results])
+
+    # Display the table
+    print(results_df)
