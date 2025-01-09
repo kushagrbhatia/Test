@@ -1,0 +1,35 @@
+import os
+import datetime
+import re
+import sys
+
+def check_file_dates(folder_path):
+    # Get today's date in the required format (MMDDYYYY)
+    today = datetime.datetime.now().strftime("%m%d%Y")
+    outdated_files = []
+    last_date_updated = None
+
+    # Loop through all files in the folder
+    for file_name in os.listdir(folder_path):
+        # Use regex to extract the date from the file name
+        match = re.search(r"\d{8}(?=\.\w+$)", file_name)
+        if match:
+            file_date = match.group()
+            if file_date != today:
+                outdated_files.append(file_name)
+                last_date_updated = file_date
+
+    # Check if there are outdated files
+    if outdated_files:
+        print("Feed files are outdated.")
+        print(f"Last date the files were updated: {last_date_updated}")
+        print(f"Outdated files: {', '.join(outdated_files)}")
+        sys.exit(4)  # Return error code 4
+
+    print("All feed files are up to date.")
+
+# Specify the folder path containing the files
+folder_path = "/path/to/your/folder"
+
+# Run the check
+check_file_dates(folder_path)
