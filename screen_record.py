@@ -19,11 +19,18 @@ def capture_and_preview(x1, y1, x2, y2):
 
     preview = tk.Toplevel(root)
     preview.title("Screenshot Preview")
+    preview.geometry("800x600")  # Optional: size to fit the preview
 
-    img_tk = ImageTk.PhotoImage(img)
+    title = tk.Label(preview, text="Preview Your Screenshot", font=("Arial", 16))
+    title.pack(pady=10)
+
+    # Resize preview for display
+    resized = img.resize((700, int(img.height * 700 / img.width))) if img.width > 700 else img
+    img_tk = ImageTk.PhotoImage(resized)
+
     img_label = tk.Label(preview, image=img_tk)
     img_label.image = img_tk
-    img_label.pack()
+    img_label.pack(pady=10)
 
     def add_to_pdf():
         captured_images.append(img.convert('RGB'))
@@ -35,9 +42,10 @@ def capture_and_preview(x1, y1, x2, y2):
         launch_snip_mode()
 
     button_frame = tk.Frame(preview)
-    button_frame.pack(pady=10)
-    tk.Button(button_frame, text="Add to PDF", command=add_to_pdf).pack(side=tk.LEFT, padx=10)
-    tk.Button(button_frame, text="Retake", command=retake).pack(side=tk.LEFT, padx=10)
+    button_frame.pack(pady=15)
+
+    tk.Button(button_frame, text="Add to PDF", command=add_to_pdf, width=15, bg="#4CAF50", fg="white").pack(side=tk.LEFT, padx=10)
+    tk.Button(button_frame, text="Retake", command=retake, width=15, bg="#f44336", fg="white").pack(side=tk.LEFT, padx=10)
 
 def launch_snip_mode():
     snip_window = tk.Toplevel(root)
@@ -97,11 +105,11 @@ def quit_app():
 # GUI Setup
 root = tk.Tk()
 root.title("Snipping Tool (Cross-Platform)")
-root.geometry("300x180")
+root.geometry("300x200")
 
 tk.Label(root, text="Snipping Tool Clone", font=("Arial", 14)).pack(pady=10)
-tk.Button(root, text="New Snip", command=launch_snip_mode, width=20).pack(pady=5)
-tk.Button(root, text="Save All to PDF", command=save_all_to_pdf, width=20).pack(pady=5)
-tk.Button(root, text="Exit", command=quit_app, width=20).pack(pady=5)
+tk.Button(root, text="New Snip", command=launch_snip_mode, width=25).pack(pady=5)
+tk.Button(root, text="Save All to PDF", command=save_all_to_pdf, width=25).pack(pady=5)
+tk.Button(root, text="Exit", command=quit_app, width=25).pack(pady=5)
 
 root.mainloop()
