@@ -8,8 +8,9 @@ from PyPDF2 import PdfReader, PdfWriter
 # List to store screenshots
 screenshots = []
 
-# Adjustable offset for alignment and expansion
-OFFSET_X = 165  # Tune this based on how off your screen is
+# Offset constants
+OFFSET_X = 165   # for horizontal shift and width expansion
+EXPAND_Y = 50    # extend bottom edge vertically
 
 def take_screenshot():
     global selection_window
@@ -44,21 +45,21 @@ def take_screenshot():
         abs_end_x = canvas.winfo_rootx() + end_x + OFFSET_X
         abs_end_y = canvas.winfo_rooty() + end_y
 
-        # Expand the box by OFFSET_X in both width and height
-        expand = OFFSET_X
+        # Expand width using OFFSET_X
         if abs_end_x > abs_start_x:
-            abs_end_x += expand
+            abs_end_x += OFFSET_X
         else:
-            abs_start_x -= expand
+            abs_start_x -= OFFSET_X
 
+        # Expand height at the bottom using EXPAND_Y
         if abs_end_y > abs_start_y:
-            abs_end_y += expand
+            abs_end_y += EXPAND_Y
         else:
-            abs_start_y -= expand
+            abs_start_y -= EXPAND_Y
 
         selection_window.destroy()
 
-        # Ensure coordinates are sorted
+        # Sort coordinates
         x1, x2 = sorted([abs_start_x, abs_end_x])
         y1, y2 = sorted([abs_start_y, abs_end_y])
 
