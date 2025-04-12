@@ -15,25 +15,25 @@ def take_screenshot():
     selection_window.attributes("-alpha", 0.3)
     selection_window.configure(bg='gray')
 
-    # Variables to store coordinates
-    global start_x, start_y, end_x, end_y
-    start_x = start_y = end_x = end_y = 0
-
     canvas = tk.Canvas(selection_window, cursor="cross")
     canvas.pack(fill=tk.BOTH, expand=True)
     rect = canvas.create_rectangle(0, 0, 0, 0, outline='red', width=2)
 
+    # Coordinates
+    global start_x, start_y, end_x, end_y
+    start_x = start_y = end_x = end_y = 0
+
     def on_mouse_down(event):
-        nonlocal start_x, start_y
+        global start_x, start_y
         start_x, start_y = event.x, event.y
 
     def on_mouse_drag(event):
-        nonlocal end_x, end_y
+        global end_x, end_y
         end_x, end_y = event.x, event.y
         canvas.coords(rect, start_x, start_y, end_x, end_y)
 
     def on_mouse_up(event):
-        nonlocal end_x, end_y
+        global end_x, end_y
         end_x, end_y = event.x, event.y
         selection_window.destroy()
         capture_screenshot(start_x, start_y, end_x, end_y)
@@ -43,13 +43,13 @@ def take_screenshot():
     canvas.bind("<ButtonRelease-1>", on_mouse_up)
 
 def capture_screenshot(start_x, start_y, end_x, end_y):
-    # Adjust coordinates to be absolute screen coords
+    # Adjust for screen-relative coordinates
     abs_start_x = selection_window.winfo_rootx() + start_x
     abs_start_y = selection_window.winfo_rooty() + start_y
     abs_end_x = selection_window.winfo_rootx() + end_x
     abs_end_y = selection_window.winfo_rooty() + end_y
 
-    # Ensure coordinates are ordered correctly
+    # Ensure correct coordinate order
     x1, x2 = sorted([abs_start_x, abs_end_x])
     y1, y2 = sorted([abs_start_y, abs_end_y])
 
@@ -62,7 +62,7 @@ def preview_screenshot(screenshot):
 
     img = ImageTk.PhotoImage(screenshot)
     img_label = tk.Label(preview_window, image=img)
-    img_label.image = img  # Avoid garbage collection
+    img_label.image = img  # Prevent garbage collection
     img_label.pack()
 
     def add_to_pdf():
@@ -78,11 +78,11 @@ def save_pdf():
         messagebox.showwarning("Warning", "No screenshots to save!")
         return
 
-    # Generate filename
+    # Generate a unique filename
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     pdf_path = f"screenshots_{timestamp}.pdf"
 
-    # Convert screenshots to RGB
+    # Convert screenshots to RGB and save
     screenshots_rgb = [img.convert('RGB') for img in screenshots]
     screenshots_rgb[0].save(
         pdf_path,
@@ -91,7 +91,7 @@ def save_pdf():
         resolution=100.0
     )
 
-    # Compress if too large
+    # Check size and compress if needed
     max_size = 8 * 1024 * 1024  # 8 MB
     if os.path.getsize(pdf_path) > max_size:
         compress_pdf(pdf_path)
@@ -108,7 +108,7 @@ def compress_pdf(pdf_path):
     with open(pdf_path, "wb") as f:
         writer.write(f)
 
-# GUI
+# Create the GUI
 root = tk.Tk()
 root.title("Screenshot to PDF")
 
