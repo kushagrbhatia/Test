@@ -8,6 +8,9 @@ from PyPDF2 import PdfReader, PdfWriter
 # List to store screenshots
 screenshots = []
 
+# Adjustable horizontal shift to fix misalignment
+OFFSET_X = 10  # Increase if screenshot still starts too far left
+
 def take_screenshot():
     global selection_window
     selection_window = tk.Toplevel(root)
@@ -36,15 +39,15 @@ def take_screenshot():
         global end_x, end_y
         end_x, end_y = event.x, event.y
 
-        # Convert canvas-relative to screen coordinates BEFORE destroying window
-        abs_start_x = canvas.winfo_rootx() + start_x
+        # Convert canvas-relative to screen coordinates, with horizontal offset
+        abs_start_x = canvas.winfo_rootx() + start_x + OFFSET_X
         abs_start_y = canvas.winfo_rooty() + start_y
-        abs_end_x = canvas.winfo_rootx() + end_x
+        abs_end_x = canvas.winfo_rootx() + end_x + OFFSET_X
         abs_end_y = canvas.winfo_rooty() + end_y
 
         selection_window.destroy()
 
-        # Ensure coordinates are ordered
+        # Ensure coordinates are ordered correctly
         x1, x2 = sorted([abs_start_x, abs_end_x])
         y1, y2 = sorted([abs_start_y, abs_end_y])
 
