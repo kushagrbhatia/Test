@@ -19,12 +19,12 @@ def capture_and_preview(x1, y1, x2, y2):
 
     preview = tk.Toplevel(root)
     preview.title("Screenshot Preview")
-    preview.geometry("800x600")  # Optional: size to fit the preview
+    preview.geometry("800x600")
 
     title = tk.Label(preview, text="Preview Your Screenshot", font=("Arial", 16))
     title.pack(pady=10)
 
-    # Resize preview for display
+    # Resize for better UI
     resized = img.resize((700, int(img.height * 700 / img.width))) if img.width > 700 else img
     img_tk = ImageTk.PhotoImage(resized)
 
@@ -36,6 +36,8 @@ def capture_and_preview(x1, y1, x2, y2):
         captured_images.append(img.convert('RGB'))
         messagebox.showinfo("Added", "Screenshot added to PDF!")
         preview.destroy()
+        # Prompt for next screenshot
+        launch_snip_mode()
 
     def retake():
         preview.destroy()
@@ -105,7 +107,7 @@ def quit_app():
 # GUI Setup
 root = tk.Tk()
 root.title("Snipping Tool (Cross-Platform)")
-root.geometry("300x200")
+root.geometry("300x220")
 
 tk.Label(root, text="Snipping Tool Clone", font=("Arial", 14)).pack(pady=10)
 tk.Button(root, text="New Snip", command=launch_snip_mode, width=25).pack(pady=5)
