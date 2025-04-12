@@ -8,9 +8,9 @@ from PyPDF2 import PdfReader, PdfWriter
 # List to store screenshots
 screenshots = []
 
-# Offset constants
-OFFSET_X = 165   # for horizontal shift and width expansion
-EXPAND_Y = 50    # extend bottom edge vertically
+# Expansion constants
+EXPAND_X = 20  # Expand width on both sides
+EXPAND_Y = 50  # Expand height (mostly at the bottom)
 
 def take_screenshot():
     global selection_window
@@ -39,23 +39,27 @@ def take_screenshot():
         global end_x, end_y
         end_x, end_y = event.x, event.y
 
-        # Convert canvas-relative to screen coordinates
-        abs_start_x = canvas.winfo_rootx() + start_x + OFFSET_X
+        # Convert to screen coordinates
+        abs_start_x = canvas.winfo_rootx() + start_x
         abs_start_y = canvas.winfo_rooty() + start_y
-        abs_end_x = canvas.winfo_rootx() + end_x + OFFSET_X
+        abs_end_x = canvas.winfo_rootx() + end_x
         abs_end_y = canvas.winfo_rooty() + end_y
 
-        # Expand width using OFFSET_X
+        # Expand horizontally
         if abs_end_x > abs_start_x:
-            abs_end_x += OFFSET_X
+            abs_start_x -= EXPAND_X
+            abs_end_x += EXPAND_X
         else:
-            abs_start_x -= OFFSET_X
+            abs_start_x += EXPAND_X
+            abs_end_x -= EXPAND_X
 
-        # Expand height at the bottom using EXPAND_Y
+        # Expand vertically
         if abs_end_y > abs_start_y:
+            abs_start_y -= EXPAND_Y // 2
             abs_end_y += EXPAND_Y
         else:
-            abs_start_y -= EXPAND_Y
+            abs_start_y += EXPAND_Y
+            abs_end_y -= EXPAND_Y // 2
 
         selection_window.destroy()
 
