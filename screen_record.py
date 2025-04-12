@@ -8,8 +8,8 @@ from PyPDF2 import PdfReader, PdfWriter
 # List to store screenshots
 screenshots = []
 
-# Adjustable horizontal shift to fix misalignment
-OFFSET_X = 10  # Increase if screenshot still starts too far left
+# Adjustable offset for alignment and expansion
+OFFSET_X = 165  # Tune this based on how off your screen is
 
 def take_screenshot():
     global selection_window
@@ -22,7 +22,6 @@ def take_screenshot():
     canvas.pack(fill=tk.BOTH, expand=True)
     rect = canvas.create_rectangle(0, 0, 0, 0, outline='red', width=2)
 
-    # Coordinates
     global start_x, start_y, end_x, end_y
     start_x = start_y = end_x = end_y = 0
 
@@ -39,15 +38,27 @@ def take_screenshot():
         global end_x, end_y
         end_x, end_y = event.x, event.y
 
-        # Convert canvas-relative to screen coordinates, with horizontal offset
+        # Convert canvas-relative to screen coordinates
         abs_start_x = canvas.winfo_rootx() + start_x + OFFSET_X
         abs_start_y = canvas.winfo_rooty() + start_y
         abs_end_x = canvas.winfo_rootx() + end_x + OFFSET_X
         abs_end_y = canvas.winfo_rooty() + end_y
 
+        # Expand the box by OFFSET_X in both width and height
+        expand = OFFSET_X
+        if abs_end_x > abs_start_x:
+            abs_end_x += expand
+        else:
+            abs_start_x -= expand
+
+        if abs_end_y > abs_start_y:
+            abs_end_y += expand
+        else:
+            abs_start_y -= expand
+
         selection_window.destroy()
 
-        # Ensure coordinates are ordered correctly
+        # Ensure coordinates are sorted
         x1, x2 = sorted([abs_start_x, abs_end_x])
         y1, y2 = sorted([abs_start_y, abs_end_y])
 
@@ -67,7 +78,7 @@ def preview_screenshot(screenshot):
 
     img = ImageTk.PhotoImage(screenshot)
     img_label = tk.Label(preview_window, image=img)
-    img_label.image = img  # Prevent garbage collection
+    img_label.image = img
     img_label.pack()
 
     def add_to_pdf():
@@ -110,7 +121,7 @@ def compress_pdf(pdf_path):
     with open(pdf_path, "wb") as f:
         writer.write(f)
 
-# GUI setup
+# GUI
 root = tk.Tk()
 root.title("Screenshot to PDF")
 
