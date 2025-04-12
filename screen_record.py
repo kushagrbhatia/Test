@@ -35,24 +35,26 @@ def take_screenshot():
     def on_mouse_up(event):
         global end_x, end_y
         end_x, end_y = event.x, event.y
+
+        # Convert to screen-relative coordinates BEFORE destroying the window
+        abs_start_x = selection_window.winfo_rootx() + start_x
+        abs_start_y = selection_window.winfo_rooty() + start_y
+        abs_end_x = selection_window.winfo_rootx() + end_x
+        abs_end_y = selection_window.winfo_rooty() + end_y
+
         selection_window.destroy()
-        capture_screenshot(start_x, start_y, end_x, end_y)
+
+        # Ensure coordinates are ordered correctly
+        x1, x2 = sorted([abs_start_x, abs_end_x])
+        y1, y2 = sorted([abs_start_y, abs_end_y])
+
+        capture_screenshot(x1, y1, x2, y2)
 
     canvas.bind("<ButtonPress-1>", on_mouse_down)
     canvas.bind("<B1-Motion>", on_mouse_drag)
     canvas.bind("<ButtonRelease-1>", on_mouse_up)
 
-def capture_screenshot(start_x, start_y, end_x, end_y):
-    # Adjust for screen-relative coordinates
-    abs_start_x = selection_window.winfo_rootx() + start_x
-    abs_start_y = selection_window.winfo_rooty() + start_y
-    abs_end_x = selection_window.winfo_rootx() + end_x
-    abs_end_y = selection_window.winfo_rooty() + end_y
-
-    # Ensure correct coordinate order
-    x1, x2 = sorted([abs_start_x, abs_end_x])
-    y1, y2 = sorted([abs_start_y, abs_end_y])
-
+def capture_screenshot(x1, y1, x2, y2):
     screenshot = ImageGrab.grab(bbox=(x1, y1, x2, y2))
     preview_screenshot(screenshot)
 
@@ -78,11 +80,9 @@ def save_pdf():
         messagebox.showwarning("Warning", "No screenshots to save!")
         return
 
-    # Generate a unique filename
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     pdf_path = f"screenshots_{timestamp}.pdf"
 
-    # Convert screenshots to RGB and save
     screenshots_rgb = [img.convert('RGB') for img in screenshots]
     screenshots_rgb[0].save(
         pdf_path,
@@ -91,7 +91,6 @@ def save_pdf():
         resolution=100.0
     )
 
-    # Check size and compress if needed
     max_size = 8 * 1024 * 1024  # 8 MB
     if os.path.getsize(pdf_path) > max_size:
         compress_pdf(pdf_path)
@@ -108,7 +107,7 @@ def compress_pdf(pdf_path):
     with open(pdf_path, "wb") as f:
         writer.write(f)
 
-# Create the GUI
+# GUI setup
 root = tk.Tk()
 root.title("Screenshot to PDF")
 
