@@ -1,26 +1,86 @@
+import os
 import tkinter as tk
 from tkinter import messagebox
-from PIL import ImageGrab, Image, ImageTk
+from PIL import Image, ImageTk
 from PyPDF2 import PdfWriter
 import datetime
-import os
+import win32gui
+import win32ui
+import win32con
+import win32api
 
-# Storage for captured images
+# Store captured screenshots
 captured_images = []
+
+def windows_api_capture(x, y, width, height):
+    hdesktop = win32gui.GetDesktopWindow()
+
+    # Create a device context
+    desktop_dc = win32gui.GetWindowDC(hdesktop)
+    img_dc = win32ui.CreateDCFromHandle(desktop_dc)
+    mem_dc = img_dc.CreateCompatibleDC()
+
+    # Create a bitmap object
+    screenshot = win32ui.CreateBitmap()
+    screenshot.CreateCompatibleBitmap(img_dc, width, height)
+    mem_dc.SelectObject(screenshot)
+
+    # Copy the screen into memory device context
+    mem_dc.BitBlt((0, 0), (width, height), img_dc, (x, y), win32con.SRCCOPY)
+
+    # Save bitmap to memory
+    bmpinfo = screenshot.GetInfo()
+    bmpstr = screenshot.GetBitmapBits(True)
+
+    image = Image.frombuffer(
+        'RGB',
+        (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
+        bmpstr, 'raw', 'BGRX', 0, 1)
+
+    # Cleanup
+    mem_dc.DeleteDC()
+    win32gui.ReleaseDC(hdesktop, desktop_dc)
+    win32gui.DeleteObject(screenshot.GetHandle())
+
+    return image
+
+def capture_and_preview(x1, y1, x2, y2):
+    width = x2 - x1
+    height = y2 - y1
+    img = windows_api_capture(x1, y1, width, height)
+
+    preview = tk.Toplevel(root)
+    preview.title("Screenshot Preview")
+
+    img_tk = ImageTk.PhotoImage(img)
+    img_label = tk.Label(preview, image=img_tk)
+    img_label.image = img_tk
+    img_label.pack()
+
+    def add_to_pdf():
+        captured_images.append(img.convert('RGB'))
+        messagebox.showinfo("Added", "Screenshot added to PDF!")
+        preview.destroy()
+
+    def retake():
+        preview.destroy()
+        launch_snip_mode()
+
+    button_frame = tk.Frame(preview)
+    button_frame.pack(pady=10)
+    tk.Button(button_frame, text="Add to PDF", command=add_to_pdf).pack(side=tk.LEFT, padx=10)
+    tk.Button(button_frame, text="Retake", command=retake).pack(side=tk.LEFT, padx=10)
 
 def launch_snip_mode():
     snip_window = tk.Toplevel(root)
     snip_window.attributes("-fullscreen", True)
     snip_window.attributes("-alpha", 0.3)
     snip_window.configure(bg='gray')
-    snip_window.lift()
-    snip_window.focus_force()
 
     canvas = tk.Canvas(snip_window, cursor="cross")
     canvas.pack(fill=tk.BOTH, expand=True)
     rect = canvas.create_rectangle(0, 0, 0, 0, outline="red", width=2)
 
-    # Store coordinates
     start_x = start_y = end_x = end_y = 0
 
     def on_mouse_down(event):
@@ -41,41 +101,16 @@ def launch_snip_mode():
         abs_end_x = canvas.winfo_rootx() + end_x
         abs_end_y = canvas.winfo_rooty() + end_y
 
+        snip_window.destroy()
+
         x1, x2 = sorted([abs_start_x, abs_end_x])
         y1, y2 = sorted([abs_start_y, abs_end_y])
 
-        snip_window.destroy()
-        capture_and_preview((x1, y1, x2, y2))
+        capture_and_preview(x1, y1, x2, y2)
 
     canvas.bind("<ButtonPress-1>", on_mouse_down)
     canvas.bind("<B1-Motion>", on_mouse_drag)
     canvas.bind("<ButtonRelease-1>", on_mouse_up)
-
-def capture_and_preview(bbox):
-    image = ImageGrab.grab(bbox=bbox)
-
-    preview = tk.Toplevel(root)
-    preview.title("Screenshot Preview")
-
-    img = ImageTk.PhotoImage(image)
-    img_label = tk.Label(preview, image=img)
-    img_label.image = img  # prevent GC
-    img_label.pack()
-
-    def add_to_pdf():
-        captured_images.append(image.convert('RGB'))
-        messagebox.showinfo("Added", "Screenshot added to PDF!")
-        preview.destroy()
-
-    def retake():
-        preview.destroy()
-        launch_snip_mode()
-
-    button_frame = tk.Frame(preview)
-    button_frame.pack(pady=10)
-
-    tk.Button(button_frame, text="Add to PDF", command=add_to_pdf).pack(side=tk.LEFT, padx=10)
-    tk.Button(button_frame, text="Retake", command=retake).pack(side=tk.LEFT, padx=10)
 
 def save_all_to_pdf():
     if not captured_images:
@@ -84,7 +119,6 @@ def save_all_to_pdf():
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     output_path = f"screenshots_{timestamp}.pdf"
-
     captured_images[0].save(output_path, save_all=True, append_images=captured_images[1:])
     messagebox.showinfo("Saved", f"PDF saved as:\n{output_path}")
     captured_images.clear()
@@ -94,11 +128,10 @@ def quit_app():
 
 # Main GUI
 root = tk.Tk()
-root.title("Snipping Tool Clone with PDF")
+root.title("Snipping Tool (Windows API)")
 root.geometry("300x180")
 
 tk.Label(root, text="Snipping Tool Clone", font=("Arial", 14)).pack(pady=10)
-
 tk.Button(root, text="New Snip", command=launch_snip_mode, width=20).pack(pady=5)
 tk.Button(root, text="Save All to PDF", command=save_all_to_pdf, width=20).pack(pady=5)
 tk.Button(root, text="Exit", command=quit_app, width=20).pack(pady=5)
