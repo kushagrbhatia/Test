@@ -8,36 +8,51 @@ import datetime
 
 # Store captured screenshots
 captured_images = []
-last_screenshot = None  # Store the most recent image for decision
+last_screenshot = None  # Holds the latest screenshot
 
 def capture_screen_area(x1, y1, x2, y2):
     width = x2 - x1
     height = y2 - y1
     return pyautogui.screenshot(region=(x1, y1, width, height))
 
-def capture_and_show_buttons(x1, y1, x2, y2):
+def capture_and_show(x1, y1, x2, y2):
     global last_screenshot
     last_screenshot = capture_screen_area(x1, y1, x2, y2)
-    show_post_snip_buttons()
+    show_preview(last_screenshot)
+    show_post_snip_controls()
 
 def add_to_pdf():
     global last_screenshot
     if last_screenshot:
         captured_images.append(last_screenshot.convert('RGB'))
         messagebox.showinfo("Added", "Screenshot added to PDF!")
-    hide_post_snip_buttons()
+    hide_post_snip_controls()
 
 def retake():
-    hide_post_snip_buttons()
+    hide_post_snip_controls()
+    clear_preview()
     launch_snip_mode()
 
-def show_post_snip_buttons():
+def show_preview(img):
+    resized = img.resize((250, int(img.height * 250 / img.width))) if img.width > 250 else img
+    preview_img = ImageTk.PhotoImage(resized)
+    preview_label.config(image=preview_img)
+    preview_label.image = preview_img  # prevent garbage collection
+    preview_label.pack(pady=10)
+
+def clear_preview():
+    preview_label.config(image='')
+    preview_label.image = None
+    preview_label.pack_forget()
+
+def show_post_snip_controls():
     add_button.pack(pady=5)
     retake_button.pack(pady=5)
 
-def hide_post_snip_buttons():
+def hide_post_snip_controls():
     add_button.pack_forget()
     retake_button.pack_forget()
+    clear_preview()
 
 def launch_snip_mode():
     snip_window = tk.Toplevel(root)
@@ -74,7 +89,7 @@ def launch_snip_mode():
         x1, x2 = sorted([abs_start_x, abs_end_x])
         y1, y2 = sorted([abs_start_y, abs_end_y])
 
-        capture_and_show_buttons(x1, y1, x2, y2)
+        capture_and_show(x1, y1, x2, y2)
 
     canvas.bind("<ButtonPress-1>", on_mouse_down)
     canvas.bind("<B1-Motion>", on_mouse_drag)
@@ -90,6 +105,8 @@ def save_all_to_pdf():
     captured_images[0].save(output_path, save_all=True, append_images=captured_images[1:])
     messagebox.showinfo("Saved", f"PDF saved as:\n{output_path}")
     captured_images.clear()
+    clear_preview()
+    hide_post_snip_controls()
 
 def quit_app():
     root.destroy()
@@ -97,7 +114,7 @@ def quit_app():
 # GUI Setup
 root = tk.Tk()
 root.title("Snipping Tool Clone")
-root.geometry("300x280")
+root.geometry("300x500")
 
 tk.Label(root, text="Snipping Tool Clone", font=("Arial", 14)).pack(pady=10)
 
@@ -105,7 +122,11 @@ tk.Button(root, text="New Snip", command=launch_snip_mode, width=25).pack(pady=5
 tk.Button(root, text="Save All to PDF", command=save_all_to_pdf, width=25).pack(pady=5)
 tk.Button(root, text="Exit", command=quit_app, width=25).pack(pady=5)
 
-# These will show only after a screenshot is taken
+# Screenshot preview (hidden until used)
+preview_label = tk.Label(root)
+preview_label.pack_forget()
+
+# Action buttons (hidden until screenshot is taken)
 add_button = tk.Button(root, text="Add Screenshot to PDF", command=add_to_pdf, width=25, bg="#4CAF50", fg="white")
 retake_button = tk.Button(root, text="Retake Screenshot", command=retake, width=25, bg="#f44336", fg="white")
 
