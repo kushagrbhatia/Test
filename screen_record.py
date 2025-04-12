@@ -1,53 +1,21 @@
 import os
+import pyautogui
 import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 from PyPDF2 import PdfWriter
 import datetime
-import win32gui
-import win32ui
-import win32con
-import win32api
 
 # Store captured screenshots
 captured_images = []
 
-def windows_api_capture(x, y, width, height):
-    hdesktop = win32gui.GetDesktopWindow()
-
-    # Create a device context
-    desktop_dc = win32gui.GetWindowDC(hdesktop)
-    img_dc = win32ui.CreateDCFromHandle(desktop_dc)
-    mem_dc = img_dc.CreateCompatibleDC()
-
-    # Create a bitmap object
-    screenshot = win32ui.CreateBitmap()
-    screenshot.CreateCompatibleBitmap(img_dc, width, height)
-    mem_dc.SelectObject(screenshot)
-
-    # Copy the screen into memory device context
-    mem_dc.BitBlt((0, 0), (width, height), img_dc, (x, y), win32con.SRCCOPY)
-
-    # Save bitmap to memory
-    bmpinfo = screenshot.GetInfo()
-    bmpstr = screenshot.GetBitmapBits(True)
-
-    image = Image.frombuffer(
-        'RGB',
-        (bmpinfo['bmWidth'], bmpinfo['bmHeight']),
-        bmpstr, 'raw', 'BGRX', 0, 1)
-
-    # Cleanup
-    mem_dc.DeleteDC()
-    win32gui.ReleaseDC(hdesktop, desktop_dc)
-    win32gui.DeleteObject(screenshot.GetHandle())
-
-    return image
-
-def capture_and_preview(x1, y1, x2, y2):
+def capture_screen_area(x1, y1, x2, y2):
     width = x2 - x1
     height = y2 - y1
-    img = windows_api_capture(x1, y1, width, height)
+    return pyautogui.screenshot(region=(x1, y1, width, height))
+
+def capture_and_preview(x1, y1, x2, y2):
+    img = capture_screen_area(x1, y1, x2, y2)
 
     preview = tk.Toplevel(root)
     preview.title("Screenshot Preview")
@@ -126,9 +94,9 @@ def save_all_to_pdf():
 def quit_app():
     root.destroy()
 
-# Main GUI
+# GUI Setup
 root = tk.Tk()
-root.title("Snipping Tool (Windows API)")
+root.title("Snipping Tool (Cross-Platform)")
 root.geometry("300x180")
 
 tk.Label(root, text="Snipping Tool Clone", font=("Arial", 14)).pack(pady=10)
