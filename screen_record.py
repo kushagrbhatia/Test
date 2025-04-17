@@ -5,27 +5,86 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 from PyPDF2 import PdfWriter
 import datetime
+import threading
 
-# Store captured screenshots
-captured_images = []
-last_screenshot = None  # Holds the latest screenshot
+# Globals for session
+session_folder = None
+capture_coords = None
+capture_running = False
+screenshot_counter = 0
+capture_timer_id = None
+
+# --- Screenshot Capture Logic ---
+def get_session_folder():
+    global session_folder
+    if session_folder is None:
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        session_folder = os.path.join(os.getcwd(), f"snip_session_{timestamp}")
+        os.makedirs(session_folder, exist_ok=True)
+    return session_folder
 
 def capture_screen_area(x1, y1, x2, y2):
     width = x2 - x1
     height = y2 - y1
     return pyautogui.screenshot(region=(x1, y1, width, height))
 
+def periodic_capture():
+    global screenshot_counter, capture_running, capture_coords, capture_timer_id
+    if not capture_running or not capture_coords:
+        return
+    x1, y1, x2, y2 = capture_coords
+    img = capture_screen_area(x1, y1, x2, y2)
+    folder = get_session_folder()
+    filename = os.path.join(folder, f'snip_{screenshot_counter:03d}.png')
+    img.save(filename)
+    screenshot_counter += 1
+    # Schedule next capture in 1 second
+    capture_timer_id = root.after(1000, periodic_capture)
+
+def start_periodic_capture(x1, y1, x2, y2):
+    global capture_running, capture_coords, screenshot_counter, session_folder, capture_timer_id
+    capture_running = True
+    capture_coords = (x1, y1, x2, y2)
+    screenshot_counter = 0
+    session_folder = None
+    if capture_timer_id:
+        root.after_cancel(capture_timer_id)
+    periodic_capture()
+
+def stop_periodic_capture():
+    global capture_running, capture_timer_id
+    capture_running = False
+    if capture_timer_id:
+        root.after_cancel(capture_timer_id)
+        capture_timer_id = None
+
+# --- GUI and Workflow ---
 def capture_and_show(x1, y1, x2, y2):
-    global last_screenshot
-    last_screenshot = capture_screen_area(x1, y1, x2, y2)
-    show_preview(last_screenshot)
+    start_periodic_capture(x1, y1, x2, y2)
+    # Show preview of the first screenshot
+    img = capture_screen_area(x1, y1, x2, y2)
+    show_preview(img)
     show_post_snip_controls()
 
+def save_all_to_pdf():
+    stop_periodic_capture()
+    folder = get_session_folder()
+    images = []
+    for fname in sorted(os.listdir(folder)):
+        if fname.lower().endswith('.png'):
+            img_path = os.path.join(folder, fname)
+            img = Image.open(img_path).convert('RGB')
+            images.append(img)
+    if not images:
+        messagebox.showwarning("No Images", "No screenshots found to save.")
+        return
+    pdf_path = os.path.join(folder, 'snip_session.pdf')
+    images[0].save(pdf_path, save_all=True, append_images=images[1:])
+    messagebox.showinfo("PDF Saved", f"Saved all screenshots to {pdf_path}")
+
 def add_to_pdf():
-    global last_screenshot
-    if last_screenshot:
-        captured_images.append(last_screenshot.convert('RGB'))
-        messagebox.showinfo("Added", "Screenshot added to PDF!")
+    # Deprecated: all images are saved automatically now
+    messagebox.showinfo("Info", "Screenshots are automatically saved. Use 'Save as PDF' to combine them.")
     hide_post_snip_controls()
 
 def retake():
@@ -96,17 +155,23 @@ def launch_snip_mode():
     canvas.bind("<ButtonRelease-1>", on_mouse_up)
 
 def save_all_to_pdf():
-    if not captured_images:
-        messagebox.showwarning("No Images", "You haven't added any screenshots yet.")
+    stop_periodic_capture()
+    folder = get_session_folder()
+    images = []
+    for fname in sorted(os.listdir(folder)):
+        if fname.lower().endswith('.png'):
+            img_path = os.path.join(folder, fname)
+            img = Image.open(img_path).convert('RGB')
+            images.append(img)
+    if not images:
+        messagebox.showwarning("No Images", "No screenshots found to save.")
         return
-
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_path = f"screenshots_{timestamp}.pdf"
-    captured_images[0].save(output_path, save_all=True, append_images=captured_images[1:])
-    messagebox.showinfo("Saved", f"PDF saved as:\n{output_path}")
-    captured_images.clear()
+    pdf_path = os.path.join(folder, 'snip_session.pdf')
+    images[0].save(pdf_path, save_all=True, append_images=images[1:])
+    messagebox.showinfo("PDF Saved", f"Saved all screenshots to {pdf_path}")
     clear_preview()
     hide_post_snip_controls()
+
 
 def quit_app():
     root.destroy()
@@ -119,7 +184,7 @@ root.geometry("300x500")
 tk.Label(root, text="Snipping Tool Clone", font=("Arial", 14)).pack(pady=10)
 
 tk.Button(root, text="New Snip", command=launch_snip_mode, width=25).pack(pady=5)
-tk.Button(root, text="Save All to PDF", command=save_all_to_pdf, width=25).pack(pady=5)
+tk.Button(root, text="Save All to PDFs", command=save_all_to_pdf, width=25).pack(pady=5)
 tk.Button(root, text="Exit", command=quit_app, width=25).pack(pady=5)
 
 # Screenshot preview (hidden until used)
