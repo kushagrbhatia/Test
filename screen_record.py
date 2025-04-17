@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 from PyPDF2 import PdfWriter
 import datetime
 import threading
+from tkinter import filedialog
 
 # Globals for session
 session_folder = None
@@ -38,8 +39,8 @@ def periodic_capture():
     filename = os.path.join(folder, f'snip_{screenshot_counter:03d}.png')
     img.save(filename)
     screenshot_counter += 1
-    # Schedule next capture in 1 second
-    capture_timer_id = root.after(1000, periodic_capture)
+    # Schedule next capture in 0.5 seconds
+    capture_timer_id = root.after(500, periodic_capture)
 
 def start_periodic_capture(x1, y1, x2, y2):
     global capture_running, capture_coords, screenshot_counter, session_folder, capture_timer_id
@@ -166,9 +167,49 @@ def save_all_to_pdf():
     if not images:
         messagebox.showwarning("No Images", "No screenshots found to save.")
         return
-    pdf_path = os.path.join(folder, 'snip_session.pdf')
-    images[0].save(pdf_path, save_all=True, append_images=images[1:])
-    messagebox.showinfo("PDF Saved", f"Saved all screenshots to {pdf_path}")
+    # Ask user for base filename and location
+    file_path = filedialog.asksaveasfilename(
+        defaultextension='.pdf',
+        filetypes=[('PDF files', '*.pdf')],
+        title='Save PDF As',
+        initialfile='snip_session.pdf'
+    )
+    if not file_path:
+        return
+    base, ext = os.path.splitext(file_path)
+    # Split into multiple PDFs if size > 8MB
+    max_size = 8 * 1024 * 1024  # 8MB
+    part = 1
+    idx = 0
+    total = len(images)
+    saved_files = []
+    while idx < total:
+        part_images = []
+        # Always put at least one image in each PDF
+        part_images.append(images[idx])
+        idx += 1
+        temp_path = f"{base}_part{part}{ext}" if total > 1 else file_path
+        # Try to add as many images as possible without exceeding max_size
+        for j in range(idx, total+1):
+            try:
+                part_images_to_save = part_images + images[idx:j]
+                part_images_to_save[0].save(temp_path, save_all=True, append_images=part_images_to_save[1:])
+                if os.path.getsize(temp_path) > max_size:
+                    break
+                part_images = part_images_to_save
+                idx = j
+            except Exception as e:
+                break
+        # Save the current part
+        part_images[0].save(temp_path, save_all=True, append_images=part_images[1:])
+        if os.path.getsize(temp_path) > max_size and len(part_images) > 1:
+            # Remove last image and save again
+            part_images = part_images[:-1]
+            part_images[0].save(temp_path, save_all=True, append_images=part_images[1:])
+            idx -= 1
+        saved_files.append(temp_path)
+        part += 1
+    messagebox.showinfo("PDF Saved", f"Saved screenshots as PDF(s):\n" + '\n'.join(saved_files))
     clear_preview()
     hide_post_snip_controls()
 
