@@ -1,0 +1,23 @@
+import re
+
+# Path to your text file
+file_path = "your_file.txt"  # Replace with your actual text file path
+
+# Patterns
+master_pattern = r'\bmaster\b'
+id_pattern = r'\b[A-Z]{2}\d{5}\b'
+
+# Set to store unique extracted IDs
+unique_ids = set()
+
+# Read and process the file
+with open(file_path, 'r') as file:
+    for line in file:
+        if re.search(master_pattern, line):
+            id_match = re.search(id_pattern, line)
+            if id_match:
+                unique_ids.add(id_match.group())
+
+# Print the unique IDs
+for eid in sorted(unique_ids):
+    print(eid)
