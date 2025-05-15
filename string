@@ -1,0 +1,27 @@
+import re
+
+def extract_full_names(text):
+    names = []
+    pattern = r'^([A-Za-z\'\.\-]+),\s+([A-Za-z\s\.\-]+)\s+\[[A-Z\-]+\]'
+
+    for line in text.splitlines():
+        match = re.match(pattern, line.strip())
+        if match:
+            last_name, first_name = match.groups()
+            full_name = f"{first_name.strip()} {last_name.strip()}"
+            names.append(full_name)
+
+    return names
+
+
+# Example usage:
+sample_text = """
+Narayanaswamy, Padma [TECH]
+Ruthra, Niranjani Kumar [TECH]
+Hota, Ashis Kumar [TECH]
+Stapleton, Sheryl L [TECH]
+"""
+
+full_names = extract_full_names(sample_text)
+for name in full_names:
+    print(name)
